@@ -11,19 +11,23 @@ final authStateProvider = StateProvider<User?>((ref) {
   return user;
 });
 
-final loginProvider = FutureProvider.family<AuthResponse, Map<String, String>>(
-  (ref, credentials) async {
-    final authService = ref.read(authServiceProvider);
-    final email = credentials['email']!;
-    final password = credentials['password']!;
+// login
+final loginProvider = FutureProvider.family<String?, Map<String, String>>((
+  ref,
+  credentials,
+) async {
+  final authService = ref.read(authServiceProvider);
+  final email = credentials['email']!;
+  final password = credentials['password']!;
 
-    final response = await authService.signIn(email, password);
-    ref.read(authStateProvider.notifier).state =
-        authService.getCurrentUser();
-    return response;
-  },
-);
+  final result = await authService.signIn(email, password);
+  if (result == null) {
+    ref.read(authStateProvider.notifier).state = authService.getCurrentUser();
+  }
+  return result;
+});
 
+// logout
 final logoutProvider = Provider((ref) {
   return () async {
     final authService = ref.read(authServiceProvider);

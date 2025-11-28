@@ -1,79 +1,161 @@
-import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import '../config/supabase_config.dart';
+import 'dart:typed_data';
+import '/config/supabase_config.dart';
 
 class ProductService {
-  final SupabaseClient _client = SupabaseConfig.client;
+  final supabase = SupabaseConfig.client;
 
-  // get semua produk
-  Future<List<Map<String, dynamic>>> getProducts() async {
-    final response = await _client.from('produk').select('*').order('created_at');
-    return response;
+  Future<List<Map<String, dynamic>>> getAllProducts() async {
+    try {
+      final response = await supabase
+          .from('produk')
+          .select('''
+          produk_id,
+          nama_produk,
+          harga,
+          kategori,
+          gambar_produk,
+          stok (stok)
+        ''')
+          .order('created_at', ascending: false);
+
+      return (response as List).map((item) {
+        final stokList = item['stok'] as List? ?? [];
+
+        return {
+          'produk_id': item['produk_id'],
+          'nama_produk': item['nama_produk'],
+          'harga': item['harga'],
+          'kategori': item['kategori'] ?? '',
+          'gambar_produk': item['gambar_produk'] ?? '',
+          'stok': stokList.isNotEmpty ? stokList[0]['stok'] : 0,
+        };
+      }).toList();
+    } catch (e) {
+      throw Exception('Gagal memuat produk: $e');
+    }
   }
 
-  // add produk baru
   Future<void> addProduct({
     required String nama,
     required double harga,
     required String kategori,
-    File? gambar,
+    String? gambar,
   }) async {
-    String? imageUrl;
+    try {
+      final response = await supabase
+          .from('produk')
+          .insert({
+            'nama_produk': nama,
+            'harga': harga,
+            'kategori': kategori,
+            'gambar_produk': gambar,
+          })
+          .select('produk_id')
+          .single();
 
-    if (gambar != null) {
-      final fileExt = p.extension(gambar.path);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}$fileExt';
-      final filePath = 'produk/$fileName';
-
-      await _client.storage.from('produk_images').upload(filePath, gambar);
-      imageUrl = _client.storage.from('produk_images').getPublicUrl(filePath);
+      await supabase.from('stok').insert({
+        'produk_id': response['produk_id'],
+        'stok': 0,
+        'modal_produk': 0,
+      });
+    } catch (e) {
+      throw Exception('Gagal menambahkan produk: $e');
     }
-
-    await _client.from('produk').insert({
-      'nama_produk': nama,
-      'harga': harga,
-      'kategori': kategori,
-      'gambar_produk': imageUrl,
-    });
   }
 
-  // update produk
   Future<void> updateProduct({
-    required int id,
+    required int produkId,
     String? nama,
     double? harga,
     String? kategori,
-    File? gambar,
+    String? gambar,
   }) async {
-    String? imageUrl;
+    try {
+      final updateData = <String, dynamic>{};
 
-    if (gambar != null) {
-      final fileExt = p.extension(gambar.path);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}$fileExt';
-      final filePath = 'produk/$fileName';
+      if (nama != null) updateData['nama_produk'] = nama;
+      if (harga != null) updateData['harga'] = harga;
+      if (kategori != null) updateData['kategori'] = kategori;
+      if (gambar != null) updateData['gambar_produk'] = gambar;
 
-      await _client.storage.from('produk_images').upload(filePath, gambar);
-      imageUrl = _client.storage.from('produk_images').getPublicUrl(filePath);
+      await supabase
+          .from('produk')
+          .update(updateData)
+          .eq('produk_id', produkId);
+    } catch (e) {
+      throw Exception('Gagal mengupdate produk: $e');
+    }
+  }
+
+  Future<void> deleteProduct(int produkId) async {
+    try {
+      await supabase
+          .from('detail_penjualan')
+          .delete()
+          .eq('produk_id', produkId);
+
+      await supabase.from('riwayat_stok').delete().eq('produk_id', produkId);
+
+      await supabase.from('stok').delete().eq('produk_id', produkId);
+
+      await supabase.from('produk').delete().eq('produk_id', produkId);
+    } catch (e) {
+      throw Exception('Gagal menghapus produk: $e');
+    }
+  }
+
+  Future<String?> uploadProductImage(Uint8List bytes, String fileName) async {
+    try {
+      await supabase.storage.from('produk').uploadBinary(fileName, bytes);
+
+      return supabase.storage.from('produk').getPublicUrl(fileName);
+    } catch (e) {
+      throw Exception('Gagal upload gambar: $e');
+    }
+  }
+
+  Future<void> deleteProductImage(String fileName) async {
+    try {
+      await supabase.storage.from('produk').remove([fileName]);
+    } catch (e) {
+      throw Exception('Gagal menghapus gambar: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getProductsByCategory(String category) async {
+  try {
+    if (category == "Semua") {
+      return await getAllProducts();
     }
 
-    final updateData = <String, dynamic>{};
-    if (nama != null) updateData['nama_produk'] = nama;
-    if (harga != null) updateData['harga'] = harga;
-    if (kategori != null) updateData['kategori'] = kategori;
-    if (imageUrl != null) updateData['gambar_produk'] = imageUrl;
+    final response = await supabase
+        .from('produk')
+        .select('''
+          produk_id,
+          nama_produk,
+          harga,
+          kategori,
+          gambar_produk,
+          stok (stok)
+        ''')
+        .eq('kategori', category)
+        .order('created_at', ascending: false);
 
-    await _client.from('produk').update(updateData).eq('produk_id', id);
-  }
+    return (response as List).map((item) {
+      final stokList = item['stok'] as List<dynamic>? ?? [];
+      final stokValue = stokList.isNotEmpty ? stokList[0]['stok'] as int? ?? 0 : 0;
 
-  // delete produk
-  Future<void> deleteProduct(int id) async {
-    await _client.from('produk').delete().eq('produk_id', id);
+      return {
+        'produk_id': item['produk_id'],
+        'nama_produk': item['nama_produk'] ?? '',
+        'harga': item['harga'] ?? 0,
+        'kategori': item['kategori'] ?? '',
+        'gambar_produk': item['gambar_produk'],
+        'stok': stokValue,
+      };
+    }).toList();
+  } catch (e) {
+    throw Exception('Gagal memuat produk berdasarkan kategori: $e');
   }
-
-  Future<File?> pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    return picked != null ? File(picked.path) : null;
-  }
+}
 }
