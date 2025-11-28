@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dashboard_screen.dart';
-import '../providers/auth_provider.dart';
+import '../dashboard_screen.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -68,7 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   color: Color(0xFF7C9D43),
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
-                ), // otomatis Poppins
+                ), 
               ),
               const SizedBox(height: 20),
               Container(
@@ -112,7 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? const CircularProgressIndicator(
                               color: Colors.white,
                             )
-                          : const Text('Login'), // otomatis Poppins
+                          : const Text('Login'), 
                     ),
                   ],
                 ),

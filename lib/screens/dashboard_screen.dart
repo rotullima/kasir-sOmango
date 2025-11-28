@@ -51,7 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: AppSizes.sectionGap),
+                        // const SizedBox(height: AppSizes.sectionGap),
 
                         SectionCard(
                           title: 'Penjualan Harian',

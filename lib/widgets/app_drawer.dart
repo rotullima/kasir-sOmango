@@ -3,7 +3,8 @@ import 'package:kasir_s0mango/screens/product/product_screen.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/auth_service.dart';
-import '../screens/login_screen.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/user/user_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isOpen;
@@ -17,7 +18,7 @@ class AppDrawer extends StatelessWidget {
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
       top: 12,
-      left: isOpen ? 9 : -80, 
+      left: isOpen ? 9 : -80,
       child: Container(
         width: 70,
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -39,16 +40,30 @@ class AppDrawer extends StatelessWidget {
             const SizedBox(height: 20),
             Icon(Icons.home_outlined, color: AppColors.textPrimary),
             SizedBox(height: 20),
+
             GestureDetector(
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProductScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProductScreen(),
+                  ),
                 );
               },
               child: Icon(Icons.grid_view, color: AppColors.textPrimary),
             ),
-            
+
+            SizedBox(height: 20),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UsersScreen()),
+                );
+              },
+              child: Icon(Icons.person_add_alt, color: AppColors.textPrimary),
+            ),
+
             SizedBox(height: 20),
             Icon(Icons.add_circle_outline, color: AppColors.textPrimary),
             SizedBox(height: 20),

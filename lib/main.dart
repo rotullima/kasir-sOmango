@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kasir_s0mango/screens/dashboard_screen.dart';
+import 'package:kasir_s0mango/screens/user/user_screen.dart';
 import 'config/supabase_config.dart';
-import 'screens/splashscreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +27,9 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF9FDF2),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7C9D43)),
       ),
-      home: const SplashScreen(),
+      home: Supabase.instance.client.auth.currentUser != null
+              ? const DashboardScreen()
+              : const UsersScreen(),
     );
   }
 }

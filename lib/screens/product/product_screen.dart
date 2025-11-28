@@ -530,12 +530,15 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
     bool active = selectedFilter == label;
 
     return GestureDetector(
-      onTap: () {
-        setState(() => showFilterPopup = false);
+      onTap: () async {
+  setState(() => showFilterPopup = false);
 
-        ref.read(filterCategoryProvider.notifier).state = label;
-        ref.read(productsProvider.notifier).loadProductsByCategory(label);
-      },
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    ref.read(filterCategoryProvider.notifier).state = label;
+    await ref.read(productsProvider.notifier).loadProductsByCategory(label);
+  });
+},
+
 
       child: Container(
         padding: const EdgeInsets.symmetric(

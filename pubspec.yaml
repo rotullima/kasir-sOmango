@@ -76,6 +76,10 @@ flutter:
     - assets/puding.png
     - assets/sago.png
     - assets/stickyrice.png
+    - assets/rotul.jpg
+    - assets/vio.jpg 
+    - assets/melati.jpg
+    - assets/nadya.jpg
   # fonts:
   #   - family: Poppins
   #     fonts:
