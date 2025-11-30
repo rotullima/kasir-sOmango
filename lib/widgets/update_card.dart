@@ -10,10 +10,10 @@ class UpdateCard extends StatelessWidget {
   final bool isStockEdit; // true = edit stok
   final String productName;
   final int currentStock;
-  final double? modalPrice; 
+  final double? modalPrice;
   final double? sellingPrice;
 
-  final String imagePath; 
+  final String imagePath;
   final XFile? pickedImage;
   final Uint8List? pickedImageBytes;
 
@@ -28,6 +28,7 @@ class UpdateCard extends StatelessWidget {
   final ValueChanged<int>? onStockChanged;
   final ValueChanged<String>? onModalPriceChanged;
   final ValueChanged<String>? onSellingPriceChanged;
+  final TextEditingController? modalPriceController;
 
   const UpdateCard({
     super.key,
@@ -36,7 +37,7 @@ class UpdateCard extends StatelessWidget {
     required this.currentStock,
     this.modalPrice,
     this.sellingPrice,
-    required this.imagePath, 
+    required this.imagePath,
     this.pickedImage,
     this.pickedImageBytes,
     required this.nameController,
@@ -48,6 +49,7 @@ class UpdateCard extends StatelessWidget {
     this.onStockChanged,
     this.onModalPriceChanged,
     this.onSellingPriceChanged,
+    this.modalPriceController,
   });
 
   @override
@@ -95,7 +97,7 @@ class UpdateCard extends StatelessWidget {
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primary, 
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [AppSizes.shadow],
       ),
@@ -158,19 +160,25 @@ class UpdateCard extends StatelessWidget {
                       ),
                     if (isStockEdit) const SizedBox(height: 4),
                     if (isStockEdit)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                      TextField(
+                        controller: modalPriceController, 
+                        keyboardType: TextInputType.number,
+                        onChanged: onModalPriceChanged,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixText: "Rp",
+                          suffixText: ",-",
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "Rp${modalPrice.toString().replaceAll('.', ',')},-",
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                   ],
                 ),

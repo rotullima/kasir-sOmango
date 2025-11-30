@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'create_product.dart';
+import 'create_product_screen.dart';
 import 'dart:ui';
 import 'dart:typed_data';
 import '/widgets/alert_dialog.dart';
@@ -12,6 +12,7 @@ import '/widgets/app_header.dart';
 import '/widgets/app_drawer.dart';
 import '/providers/product_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import '../stock/stock_screen.dart';
 
 class ProductScreen extends ConsumerStatefulWidget {
   const ProductScreen({super.key});
@@ -373,7 +374,12 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
                     ),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // routing nantiii
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StockScreen(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.textSecondary,
@@ -531,14 +537,15 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
 
     return GestureDetector(
       onTap: () async {
-  setState(() => showFilterPopup = false);
+        setState(() => showFilterPopup = false);
 
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    ref.read(filterCategoryProvider.notifier).state = label;
-    await ref.read(productsProvider.notifier).loadProductsByCategory(label);
-  });
-},
-
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          ref.read(filterCategoryProvider.notifier).state = label;
+          await ref
+              .read(productsProvider.notifier)
+              .loadProductsByCategory(label);
+        });
+      },
 
       child: Container(
         padding: const EdgeInsets.symmetric(
