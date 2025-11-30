@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_s0mango/screens/product/product_screen.dart';
+import 'package:kasir_s0mango/screens/report/report_screen.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/auth_service.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/user/user_screen.dart';
+import '/screens/dashboard_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isOpen;
@@ -38,7 +40,19 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Icon(Icons.home_outlined, color: AppColors.textPrimary),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DashboardScreen(),
+                  ),
+                );
+              },
+              child: Icon(Icons.home_outlined, color: AppColors.textPrimary),
+            ),
+
             SizedBox(height: 20),
 
             GestureDetector(
@@ -69,7 +83,17 @@ class AppDrawer extends StatelessWidget {
             SizedBox(height: 20),
             Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
             SizedBox(height: 20),
-            Icon(Icons.receipt_long, color: AppColors.textPrimary),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ReportScreen()),
+                );
+              },
+              child: Icon(Icons.receipt_long, color: AppColors.textPrimary),
+            ),
+
             SizedBox(height: 20),
 
             GestureDetector(
