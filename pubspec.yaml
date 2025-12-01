@@ -81,6 +81,8 @@ flutter:
     - assets/vio.jpg 
     - assets/melati.jpg
     - assets/nadya.jpg
+    - assets/qris.png
+    - assets/cash.png
   # fonts:
   #   - family: Poppins
   #     fonts:

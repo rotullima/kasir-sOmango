@@ -4,18 +4,20 @@ import '../constants/app_sizes.dart';
 
 class StockCard extends StatelessWidget {
   final String name;
-  final int stock;
+  final dynamic displayValue;        // baru: bisa int stock atau price
   final String image;
-  final VoidCallback onEdit;
-  final VoidCallback onDetail;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDetail;
+  final bool showActions;            // baru: buat sembunyiin icon edit/detail
 
   const StockCard({
     super.key,
     required this.name,
-    required this.stock,
+    required this.displayValue,
     required this.image,
-    required this.onEdit,
-    required this.onDetail,
+    this.onEdit,
+    this.onDetail,
+    this.showActions = true,         // default true (buat stok), false buat kasir
   });
 
   @override
@@ -42,53 +44,40 @@ class StockCard extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-
               const Spacer(),
-
-              Column(
-                children: [
-                  GestureDetector(
-                    onTap: onEdit,
-                    child: const Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: AppColors.textPrimary,
+              if (showActions) ...[          // hanya muncul kalau showActions = true
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: onEdit,
+                      child: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textPrimary),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: onDetail,
-                    child: const Icon(
-                      Icons.info_outline,
-                      size: 20,
-                      color: AppColors.textPrimary,
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: onDetail,
+                      child: const Icon(Icons.info_outline, size: 20, color: AppColors.textPrimary),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
-
           const SizedBox(height: 10),
-
           Text(
             name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-              fontSize: 13,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 15),
           ),
-
           const SizedBox(height: 4),
-
           Text(
-            "stok: $stock",
-            style: const TextStyle(
+            displayValue is int && displayValue >= 1000
+                ? "Rp${displayValue.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')},-"
+                : "stok: $displayValue",
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textPrimary,
+              fontWeight: displayValue is int && displayValue >= 1000 ? FontWeight.bold : FontWeight.normal,
+              color: displayValue is int && displayValue >= 1000 ? AppColors.primary : AppColors.textPrimary,
             ),
           ),
         ],

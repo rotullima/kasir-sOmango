@@ -70,7 +70,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
 
                       return StockCard(
                         name: item.nama,
-                        stock: item.stok,
+                        displayValue: item.stok,
                         image: item.gambar,
                         onEdit: () {
                           setState(() {

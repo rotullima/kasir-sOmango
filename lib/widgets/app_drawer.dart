@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/user/user_screen.dart';
 import '/screens/dashboard_screen.dart';
+import '../screens/cashier/cashier_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isOpen;
@@ -81,7 +82,17 @@ class AppDrawer extends StatelessWidget {
             SizedBox(height: 20),
             Icon(Icons.add_circle_outline, color: AppColors.textPrimary),
             SizedBox(height: 20),
-            Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CashierScreen()),
+                );
+              },
+              child: Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
+            ),
+
             SizedBox(height: 20),
 
             GestureDetector(
