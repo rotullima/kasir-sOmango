@@ -1,35 +1,28 @@
-class ProductModel {
-  final String id;
+class StockModel {
+  final int stokId;
+  final String productId;
   String nama;
-  int stok; 
-  final String gambar;
-  double modalPrice; 
+  int stok;
+  String gambar;
+  double modalPrice;
 
-  ProductModel({
-    required this.id,
+  StockModel({
+    required this.stokId,
+    required this.productId,
     required this.nama,
     required this.stok,
     required this.gambar,
-    required this.modalPrice, 
+    required this.modalPrice,
   });
 
-  factory ProductModel.fromMap(Map<String, dynamic> map) {
-    return ProductModel(
-      id: map["id"],
-      nama: map["nama"],
-      stok: map["stok"],
-      gambar: map["gambar"],
-      modalPrice: map["modalPrice"]?.toDouble() ?? 0.0, 
+  factory StockModel.fromMap(Map<String, dynamic> map) {
+    return StockModel(
+      stokId: map["stok_id"],
+      productId: map["produk_id"].toString(),
+      nama: map["nama_produk"] ?? "",
+      stok: map["stok"] ?? 0,
+      gambar: map["gambar_produk"] ?? "",
+      modalPrice: (map["modal_produk"] as num?)?.toDouble() ?? 0.0,
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      "id": id,
-      "nama": nama,
-      "stok": stok,
-      "gambar": gambar,
-      "modalPrice": modalPrice, 
-    };
   }
 }

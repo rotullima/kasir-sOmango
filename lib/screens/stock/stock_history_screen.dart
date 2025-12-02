@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../models/stock_model.dart';
-import '../../models/stock_history_model.dart';
+import '../../providers/stock_history_provider.dart';
 
-class StockHistoryScreen extends StatefulWidget {
-  final ProductModel product;
-  final List<StockHistoryEntry> history;
+class StockHistoryScreen extends ConsumerStatefulWidget {
+  final StockModel product;
 
-  const StockHistoryScreen({
-    super.key,
-    required this.product,
-    required this.history,
-  });
+  const StockHistoryScreen({super.key, required this.product});
 
   @override
-  State<StockHistoryScreen> createState() => _StockHistoryScreenState();
+  ConsumerState<StockHistoryScreen> createState() => _StockHistoryScreenState();
 }
 
-class _StockHistoryScreenState extends State<StockHistoryScreen> {
+class _StockHistoryScreenState extends ConsumerState<StockHistoryScreen> {
   bool isDrawerOpen = false;
 
   void toggleDrawer() {
@@ -44,6 +40,10 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final historyAsync = ref.watch(
+      stockHistoryProvider(int.parse(widget.product.productId)),
+    );
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -61,7 +61,6 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
                     onToggle: toggleDrawer,
                   ),
                 ),
-
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: const EdgeInsets.all(12),
@@ -83,9 +82,7 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -103,7 +100,7 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
-                                child: Image.asset(
+                                child: Image.network(
                                   widget.product.gambar,
                                   width: 90,
                                   height: 90,
@@ -126,7 +123,7 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       "stok: ${widget.product.stok}",
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
@@ -137,9 +134,7 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 30),
-
                           Row(
                             children: const [
                               Expanded(
@@ -176,84 +171,85 @@ class _StockHistoryScreenState extends State<StockHistoryScreen> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 12),
                           const Divider(
                             height: 1,
                             color: AppColors.textPrimary,
                           ),
-
                           Expanded(
-                            child: widget.history.isEmpty
-                                ? const Center(
-                                    child: Text(
-                                      "Belum ada riwayat penjualan",
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14,
+                            child: historyAsync.when(
+                              data: (history) => history.isEmpty
+                                  ? const Center(
+                                      child: Text(
+                                        "Belum ada riwayat penjualan",
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
                                       ),
+                                    )
+                                  : ListView.separated(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      itemCount: history.length,
+                                      separatorBuilder: (_, __) =>
+                                          const SizedBox(height: 12),
+                                      itemBuilder: (context, i) {
+                                        final entry = history[i];
+                                        return Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 4,
+                                              child: Text(
+                                                entry.customerName,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                "${entry.quantity}x",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                formatDate(entry.date),
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                                textAlign: TextAlign.right,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     ),
-                                  )
-                                : ListView.separated(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    itemCount: widget.history.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(height: 12),
-                                    itemBuilder: (context, i) {
-                                      final entry = widget.history[i];
-                                      return Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 4,
-                                            child: Text(
-                                              entry.customerName,
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                color: AppColors.textPrimary,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              "${entry.quantity}x",
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                color: AppColors.textPrimary,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 3,
-                                            child: Text(
-                                              formatDate(entry.date),
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                color: AppColors.textPrimary,
-                                              ),
-                                              textAlign: TextAlign.right,
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              error: (e, _) => Center(child: Text("Error: $e")),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 100), 
+                const SizedBox(height: 100),
               ],
             ),
-
             AppDrawer(isOpen: isDrawerOpen, onToggle: toggleDrawer),
-
             Positioned(
               left: 0,
               right: 0,

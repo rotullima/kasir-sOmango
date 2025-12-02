@@ -38,16 +38,25 @@ class ProductsNotifier
     }
   }
 
+  void updateStock(String productId, int newStock) {
+    state = state.whenData((products) {
+      return [
+        for (final p in products)
+          if (p['produk_id'].toString() == productId)
+            {...p, 'stok': newStock} 
+          else
+            Map<String, dynamic>.from(p), 
+      ];
+    });
+  }
+
   Future<void> loadProductsByCategory(String category) async {
     state = const AsyncValue.loading();
     try {
-      if (category == "Semua") {
-        final products = await _service.getAllProducts();
-        state = AsyncValue.data(products);
-      } else {
-        final products = await _service.getProductsByCategory(category);
-        state = AsyncValue.data(products);
-      }
+      final products = category == "Semua"
+          ? await _service.getAllProducts()
+          : await _service.getProductsByCategory(category);
+      state = AsyncValue.data(products);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -65,9 +74,7 @@ class ProductsNotifier
       kategori: kategori,
       gambar: gambar,
     );
-
-    final cat = _ref.read(filterCategoryProvider);
-    await loadProductsByCategory(cat);
+    await loadProductsByCategory(_ref.read(filterCategoryProvider));
   }
 
   Future<void> updateProduct({
@@ -84,16 +91,12 @@ class ProductsNotifier
       kategori: kategori,
       gambar: gambar,
     );
-
-    final cat = _ref.read(filterCategoryProvider);
-    await loadProductsByCategory(cat);
+    await loadProductsByCategory(_ref.read(filterCategoryProvider));
   }
 
   Future<void> deleteProduct(int produkId) async {
     await _service.deleteProduct(produkId);
-
-    final cat = _ref.read(filterCategoryProvider);
-    await loadProductsByCategory(cat);
+    await loadProductsByCategory(_ref.read(filterCategoryProvider));
   }
 }
 
@@ -103,9 +106,14 @@ final filteredProductsProvider =
       final search = ref.watch(searchQueryProvider).toLowerCase();
 
       return productsAsync.whenData((products) {
-        return products.where((item) {
-          final nama = item['nama_produk'].toString().toLowerCase();
-          return nama.contains(search);
-        }).toList();
+        return products
+            .map(
+              (p) => Map<String, dynamic>.from(p),
+            ) 
+            .where(
+              (item) =>
+                  item['nama_produk'].toString().toLowerCase().contains(search),
+            )
+            .toList();
       });
     });

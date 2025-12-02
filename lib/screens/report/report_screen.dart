@@ -22,13 +22,12 @@ class ReportScreen extends ConsumerStatefulWidget {
 class _ReportScreenState extends ConsumerState<ReportScreen> {
   bool isOpen = false;
   bool showFilterPopup = false;
-  String selectedFilter = 'Produk'; 
+  String selectedFilter = 'Produk';
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
     final period = ref.watch(reportPeriodProvider);
     final pendapatan = period == 'Harian' ? dailyIncome : monthlyIncome;
     final labaRugi = pendapatan - totalModal;
@@ -41,7 +40,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.p16,
+                    vertical: AppSizes.p16,
+                  ),
                   child: AppHeader(title: 'LAPORAN', onToggle: toggleDrawer),
                 ),
 
@@ -59,12 +61,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                             decoration: BoxDecoration(
                               color: period == 'Harian'
                                   ? Colors.transparent
-                                  : AppColors.primary, 
+                                  : AppColors.primary,
                               border: period == 'Harian'
                                   ? Border.all(
                                       color: AppColors.textPrimary,
                                       width: 2,
-                                    ) 
+                                    )
                                   : null,
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -99,7 +101,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                   ? Border.all(
                                       color: AppColors.textPrimary,
                                       width: 2,
-                                    ) 
+                                    )
                                   : null,
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -118,14 +120,19 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                       ),
                       const SizedBox(width: 12),
                       GestureDetector(
-                        onTap: () => setState(() => showFilterPopup = !showFilterPopup),
+                        onTap: () =>
+                            setState(() => showFilterPopup = !showFilterPopup),
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Icon(Icons.filter_alt_outlined, color: AppColors.textPrimary, size: 24),
+                          child: const Icon(
+                            Icons.filter_alt_outlined,
+                            color: AppColors.textPrimary,
+                            size: 24,
+                          ),
                         ),
                       ),
                     ],
@@ -138,9 +145,21 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
                   child: Row(
                     children: [
-                      Expanded(child: _summaryCard("Modal", totalModal, AppColors.textSecondary)),
+                      Expanded(
+                        child: _summaryCard(
+                          "Modal",
+                          totalModal,
+                          AppColors.textSecondary,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _summaryCard("Pendapatan", pendapatan, AppColors.textSecondary)),
+                      Expanded(
+                        child: _summaryCard(
+                          "Pendapatan",
+                          pendapatan,
+                          AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -151,14 +170,29 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
                   child: Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Row(
                       children: [
-                        const Text('RP Laba Rugi', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'RP Laba Rugi',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const Spacer(),
-                        Text(formatRupiah(labaRugi),
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold,
-                            color: labaRugi >= 0 ? Colors.green[800] : Colors.red[800]),
+                        Text(
+                          formatRupiah(labaRugi),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: labaRugi >= 0
+                                ? Colors.green[800]
+                                : Colors.red[800],
+                          ),
                         ),
                       ],
                     ),
@@ -169,17 +203,22 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p16,
+                    ),
                     child: Column(
                       children: [
                         if (selectedFilter == 'Produk')
-                        SectionCard(
-                          title: 'Penjualan Hari Ini',
-                          trailing: Text('Rp. ${formatRupiah(pendapatan)},00',
-                            style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.bold).copyWith(color: AppColors.textSecondary)),
-                          child: AppBarChart(data: dailySalesReport),
-                        ),
-
+                          SectionCard(
+                            title: 'Penjualan Hari Ini',
+                            trailing: Text(
+                              'Rp. ${formatRupiah(pendapatan)},00',
+                              style: AppTextStyles.subtitle
+                                  .copyWith(fontWeight: FontWeight.bold)
+                                  .copyWith(color: AppColors.textSecondary),
+                            ),
+                            child: AppBarChart(data: dailySalesReport),
+                          ),
 
                         const SizedBox(height: AppSizes.sectionGap),
 
@@ -199,27 +238,95 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Laporan Pembelian Pelanggan',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                                const Text(
+                                  'Laporan Pembelian Pelanggan',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                                 const SizedBox(height: 16),
                                 Row(
                                   children: const [
-                                    Expanded(flex: 2, child: Text('Pelanggan', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textSecondary))),
-                                    Expanded(child: Text('Jumlah Produk', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textSecondary), textAlign: TextAlign.center,)),
-                                    Expanded(flex: 2, child: Text('Total Harga', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textSecondary), textAlign: TextAlign.right)),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        'Pelanggan',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        'Jumlah Produk',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        'Total Harga',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                const Divider(height: 24, color: Colors.white70),
-                                ...customerPurchases.map((e) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    children: [
-                                      Expanded(flex: 2, child: Text(e.customerName, style: TextStyle(color: AppColors.textSecondary,) )),
-                                      Expanded(child: Text(e.itemCount.toString(), style: TextStyle(color: AppColors.textSecondary,), textAlign: TextAlign.center)),
-                                      Expanded(flex: 2, child: Text(formatRupiah(e.totalPrice.toDouble()), style: TextStyle(color: AppColors.textSecondary,),  textAlign: TextAlign.right)),
-                                    ],
+                                const Divider(
+                                  height: 24,
+                                  color: Colors.white70,
+                                ),
+                                ...customerPurchases.map(
+                                  (e) => Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                            e.customerName,
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            e.itemCount.toString(),
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                            formatRupiah(
+                                              e.totalPrice.toDouble(),
+                                            ),
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                )),
+                                ),
                                 const SizedBox(height: 20),
                               ],
                             ),
@@ -245,7 +352,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   backgroundColor: AppColors.textSecondary,
                   foregroundColor: AppColors.textPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
@@ -257,11 +366,16 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 child: Material(
                   color: Colors.transparent,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 10),
+                      ],
                     ),
                     child: Column(
                       children: [
@@ -302,7 +416,13 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           borderRadius: BorderRadius.circular(10),
           border: active ? Border.all(color: AppColors.textPrimary) : null,
         ),
-        child: Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: active ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.8))),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: active ? AppColors.textPrimary : AppColors.textPrimary,
+          ),
+        ),
       ),
     );
   }
@@ -319,18 +439,23 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         children: [
           Text(
             'RP $label',
-            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold).copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.body
+                .copyWith(fontWeight: FontWeight.bold)
+                .copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(
             formatRupiah(amount),
-            style: AppTextStyles.title.copyWith(fontWeight: FontWeight.bold).copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.title
+                .copyWith(fontWeight: FontWeight.bold)
+                .copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
     );
   }
 }
+
 String formatRupiah(double amount) {
   final str = amount.toInt().toString();
   return str.replaceAllMapped(

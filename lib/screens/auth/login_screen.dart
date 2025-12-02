@@ -14,35 +14,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _isValidEmail(String email) {
+  final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+  return regex.hasMatch(email);
+}
+
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+  final email = _emailController.text.trim();
+  final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      _showSnackBar('Email or password cannot be empty.');
-      return;
-    }
+  if (email.isEmpty) {
+    _showSnackBar("Email tidak boleh kosong.");
+    return;
+  }
 
-    setState(() => _isLoading = true);
+  if (!_isValidEmail(email)) {
+    _showSnackBar("Format email tidak valid.");
+    return;
+  }
 
-    final result = await ref.read(
-      loginProvider({'email': email, 'password': password}).future,
+  if (password.isEmpty) {
+    _showSnackBar("Password tidak boleh kosong.");
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  final result = await ref.read(
+    loginProvider({'email': email, 'password': password}).future,
+  );
+
+  setState(() => _isLoading = false);
+
+  if (result == null) {
+    _showSnackBar('Login berhasil!');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
     );
-
-    setState(() => _isLoading = false);
-
-    if (result == null) {
-      _showSnackBar('Login success!');
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
+  } else {
+    if (result.toLowerCase().contains("invalid login credentials")) {
+      _showSnackBar("Email atau password salah.");
     } else {
       _showSnackBar(result);
     }
   }
+}
+
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

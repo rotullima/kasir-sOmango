@@ -4,11 +4,11 @@ import '/widgets/app_header.dart';
 import '/widgets/app_drawer.dart';
 import '/widgets/product_card.dart';
 import '/constants/app_colors.dart';
-
+import 'package:kasir_s0mango/widgets/cashier_cust.dart';
 import 'package:kasir_s0mango/models/cashier_model.dart';
-import 'package:kasir_s0mango/models/customer_model.dart';
+import 'package:kasir_s0mango/models/cashier_cust.dart';
 import 'package:kasir_s0mango/dummy/cashier_dummy.dart';
-import 'package:kasir_s0mango/dummy/customer_dummy.dart';
+import 'package:kasir_s0mango/dummy/cashier_customer_dummy.dart';
 import 'package:kasir_s0mango/screens/cashier/cart_summary_screen.dart';
 
 class CashierScreen extends ConsumerStatefulWidget {
@@ -19,13 +19,47 @@ class CashierScreen extends ConsumerStatefulWidget {
 }
 
 class _CashierScreenState extends ConsumerState<CashierScreen> {
-  CustomerModel? _selectedCustomer;
+  CashierCustModel? _selectedCustomer;
 
   final TextEditingController _searchController = TextEditingController();
   bool isOpen = false;
 
   void toggleDrawer() {
     setState(() => isOpen = !isOpen);
+  }
+
+  void _openAddCustomer() {
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: CashierCustomDialog(
+          type: CashierDialogType.addCustomer,
+          nameController: nameCtrl,
+          emailController: emailCtrl,
+          onCancel: () => Navigator.pop(context),
+          onConfirm: () {
+            setState(() {
+              final newCustomer = CashierCustModel(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: nameCtrl.text,
+                email: emailCtrl.text,
+                points: 0,
+              );
+
+              dummyCustomers.add(newCustomer);
+
+              _selectedCustomer = newCustomer;
+            });
+
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
   }
 
   List<ProductModel> filteredProducts = dummyProducts;
@@ -76,7 +110,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                       Expanded(
                         flex: 3,
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButtonFormField<CustomerModel>(
+                          child: DropdownButtonFormField<CashierCustModel>(
                             value: _selectedCustomer,
                             icon: const SizedBox.shrink(),
 
@@ -156,7 +190,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                       Expanded(
                         flex: 2,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: _openAddCustomer,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: AppColors.textSecondary,
@@ -310,10 +344,8 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) => CartSummaryScreen(
-                            customer: _selectedCustomer!, 
-                            cartItems: Map.from(
-                              cartItems,
-                            ), 
+                            customer: _selectedCustomer!,
+                            cartItems: Map.from(cartItems),
                           ),
                         ),
                       );

@@ -9,10 +9,10 @@ import '/widgets/payment.dart';
 import '/constants/app_colors.dart';
 
 import 'package:kasir_s0mango/models/cashier_model.dart';
-import 'package:kasir_s0mango/models/customer_model.dart';
+import 'package:kasir_s0mango/models/cashier_cust.dart';
 
 class CartSummaryScreen extends ConsumerStatefulWidget {
-  final CustomerModel customer;
+  final CashierCustModel customer;
   final Map<ProductModel, int> cartItems;
 
   const CartSummaryScreen({
@@ -70,7 +70,7 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
     final now = DateTime.now();
     final hour = now.hour;
     final amPm = hour < 12 ? "AM" : "PM";
-    final transactionCount = 45; 
+    final transactionCount = 45;
     return "$transactionCount-$amPm";
   }
 
@@ -90,7 +90,7 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
       totalPayment: totalPayment,
       paymentMethod: "QRIS",
       cashReceived: null,
-      cashierName: "Melati", 
+      cashierName: "Melati",
     );
   }
 
@@ -177,7 +177,7 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
                 },
               ),
 
-              const SizedBox(height: 18), 
+              const SizedBox(height: 18),
               Text(
                 "Kembalian",
                 style: TextStyle(
@@ -213,9 +213,7 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
                 ),
               ),
 
-              const SizedBox(
-                height: 40,
-              ), 
+              const SizedBox(height: 40),
             ],
           ),
 
@@ -255,13 +253,13 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.textSecondary,
-                  foregroundColor: AppColors.textPrimary, 
+                  foregroundColor: AppColors.textPrimary,
                   disabledBackgroundColor: Colors.grey[400],
                   disabledForegroundColor: Colors.grey[600],
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 18,
-                  ), 
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

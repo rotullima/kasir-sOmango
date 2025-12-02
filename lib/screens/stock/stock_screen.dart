@@ -1,14 +1,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/update_card.dart';
-import '../../dummy/stock_dummy.dart';
-import '../../widgets/product_card.dart';
-import '/widgets/app_header.dart';
-import '/widgets/app_drawer.dart';
-import '/constants/app_colors.dart';
-import '/constants/app_sizes.dart';
-import '../stock/stock_history_screen.dart';
+import '../../../constants/app_colors.dart';
+import '../../../constants/app_sizes.dart';
+import '../../../widgets/app_header.dart';
+import '../../../widgets/app_drawer.dart';
+import '../../../widgets/update_card.dart';
+import '../../../widgets/product_card.dart';
+import '/providers/product_provider.dart';
+import '/providers/stock_provider.dart';
+import '/screens/stock/stock_history_screen.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -17,21 +18,29 @@ class StockScreen extends ConsumerStatefulWidget {
   ConsumerState<StockScreen> createState() => _StockScreenState();
 }
 
-Map<String, dynamic>? editingStock;
-bool isEditing = false;
-
 class _StockScreenState extends ConsumerState<StockScreen> {
   bool isOpen = false;
-  int? editingIndex;
-  TextEditingController? _modalPriceController;
-  TextEditingController? _nameController;
 
-  void toggleDrawer() {
-    setState(() => isOpen = !isOpen);
+  void toggleDrawer() => setState(() => isOpen = !isOpen);
+
+  Map<String, dynamic>? editing;
+  int? stokIdEditing;
+  bool isEditing = false;
+
+  TextEditingController? nameCtrl;
+  TextEditingController? modalCtrl;
+
+  @override
+  void dispose() {
+    nameCtrl?.dispose();
+    modalCtrl?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final stockAsync = ref.watch(stockListProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -45,66 +54,82 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     vertical: AppSizes.p16,
                   ),
                   child: AppHeader(
-                    title: 'PRODUK > STOK',
+                    title: "PRODUK > STOK",
                     onToggle: toggleDrawer,
                   ),
                 ),
 
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    itemCount: dummyProductswithHistory.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.95,
-                          crossAxisSpacing: 20,
-                          mainAxisSpacing: 20,
+                  child: stockAsync.when(
+                    data: (list) {
+                      return GridView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
                         ),
-                    itemBuilder: (context, i) {
-                      final data = dummyProductswithHistory[i];
-                      final item = data.product;
-
-                      return StockCard(
-                        name: item.nama,
-                        displayValue: item.stok,
-                        image: item.gambar,
-                        onEdit: () {
-                          setState(() {
-                            _modalPriceController?.dispose();
-                            _nameController?.dispose();
-                            _modalPriceController = TextEditingController(
-                              text: item.modalPrice.toStringAsFixed(0),
-                            );
-                            _nameController = TextEditingController(
-                              text: item.nama,
-                            );
-                            editingIndex = i;
-                            editingStock = {
-                              "nama": item.nama,
-                              "stok": item.stok,
-                              "gambar": item.gambar,
-                              "modalPrice": item.modalPrice,
-                            };
-                            isEditing = true;
-                          });
-                        },
-                        onDetail: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => StockHistoryScreen(
-                                product: item,
-                                history: data.history,
-                              ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.95,
+                              crossAxisSpacing: 20,
+                              mainAxisSpacing: 20,
                             ),
+                        itemCount: list.length,
+                        itemBuilder: (_, i) {
+                          final item = list[i];
+
+                          print(
+                            'Stock item: ${item.nama}, Image: ${item.gambar}',
+                          );
+
+                          return StockCard(
+                            name: item.nama,
+                            displayValue: item.stok,
+                            image: item.gambar.isEmpty
+                                ? 'https://via.placeholder.com/150'
+                                : item.gambar,
+                            onEdit: () {
+                              setState(() {
+                                nameCtrl?.dispose();
+                                modalCtrl?.dispose();
+
+                                stokIdEditing = item.stokId;
+                                editing = {
+                                  "name": item.nama,
+                                  "stock": item.stok,
+                                  "modal": item.modalPrice,
+                                  "gambar": item.gambar,
+                                  "produk_id": item.productId,
+                                };
+
+                                nameCtrl = TextEditingController(
+                                  text: item.nama,
+                                );
+                                modalCtrl = TextEditingController(
+                                  text: item.modalPrice > 0
+                                      ? item.modalPrice.toString()
+                                      : '',
+                                );
+
+                                isEditing = true;
+                              });
+                            },
+                            onDetail: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      StockHistoryScreen(product: item),
+                                ),
+                              );
+                            },
                           );
                         },
                       );
                     },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text("Error: $e")),
                   ),
                 ),
 
@@ -112,7 +137,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               ],
             ),
 
-            if (isEditing && editingStock != null && editingIndex != null)
+            if (isEditing && editing != null)
               Positioned.fill(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
@@ -121,61 +146,113 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     alignment: Alignment.center,
                     child: UpdateCard(
                       isStockEdit: true,
-                      productName: editingStock!["nama"],
-                      currentStock: editingStock!["stok"],
-                      modalPrice: editingStock!["modalPrice"],
-                      imagePath: editingStock!["gambar"],
+                      productName: editing!["name"],
+                      modalPrice: editing!["modal"],
+                      currentStock: editing!["stock"],
+                      imagePath: editing!["gambar"],
                       pickedImage: null,
                       pickedImageBytes: null,
-                      nameController: _nameController!,
+                      nameController: nameCtrl!,
+                      modalPriceController: modalCtrl!,
                       priceController: TextEditingController(),
-                      modalPriceController: _modalPriceController,
-                      onBack: () {
+                      onProductNameChanged: (v) {
                         setState(() {
-                          _modalPriceController?.dispose();
-                          _nameController?.dispose();
-                          _modalPriceController = null;
-                          _nameController = null;
-                          isEditing = false;
-                          editingIndex = null;
+                          editing!["name"] = v;
                         });
                       },
-                      onDone: () {
-                        if (editingIndex != null) {
-                          final updatedProduct =
-                              dummyProductswithHistory[editingIndex!].product;
-                          updatedProduct.nama = editingStock!["nama"];
-                          updatedProduct.stok = editingStock!["stok"];
-                          updatedProduct.modalPrice =
-                              editingStock!["modalPrice"];
-                        }
+                      onModalPriceChanged: (v) {
+                        final parsed = double.tryParse(v) ?? 0.0;
                         setState(() {
-                          _modalPriceController?.dispose();
-                          _nameController?.dispose();
-                          _modalPriceController = null;
-                          _nameController = null;
-                          isEditing = false;
-                          editingIndex = null;
+                          editing!["modal"] = parsed;
                         });
                       },
-                      onStockChanged: (newStock) {
-                        if (newStock >= 0) {
+
+                      onStockChanged: (v) {
+                        if (v >= 0) {
                           setState(() {
-                            editingStock!["stok"] = newStock;
+                            editing!["stock"] = v;
                           });
                         }
                       },
-                      onProductNameChanged: (newName) {
+                      onBack: () {
                         setState(() {
-                          editingStock!["nama"] = newName;
+                          nameCtrl?.dispose();
+                          modalCtrl?.dispose();
+                          nameCtrl = null;
+                          modalCtrl = null;
+                          isEditing = false;
+                          editing = null;
                         });
                       },
-                      onModalPriceChanged: (newPrice) {
-                        setState(() {
-                          editingStock!["modalPrice"] =
-                              double.tryParse(newPrice) ??
-                              editingStock!["modalPrice"];
-                        });
+                      onDone: () async {
+                        if (editing?["name"] == null ||
+                            editing!["name"].trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Nama produk tidak boleh kosong!"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final modalText = modalCtrl?.text ?? '';
+                        final parsedModal = double.tryParse(
+                          modalText.replaceAll(',', '.'),
+                        );
+                        if (parsedModal == null || parsedModal <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Modal harus berupa angka lebih dari 0",
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final success = await ref
+                            .read(updateStockProvider.notifier)
+                            .update(
+                              stokId: stokIdEditing!,
+                              newStock: editing!["stock"],
+                              modalPrice: editing!["modal"],
+                            );
+
+                        if (success) {
+                          final productId = editing?["produk_id"] as String?;
+                          if (productId != null && productId.isNotEmpty) {
+                            ref
+                                .read(productsProvider.notifier)
+                                .updateStock(productId, editing!["stock"]);
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Stok berhasil diupdate"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+
+                          ref.refresh(stockListProvider);
+
+                          setState(() {
+                            nameCtrl?.dispose();
+                            modalCtrl?.dispose();
+                            nameCtrl = null;
+                            modalCtrl = null;
+                            isEditing = false;
+                            editing = null;
+                          });
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Gagal update stok"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                     ),
                   ),

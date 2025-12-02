@@ -27,9 +27,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   @override
   void initState() {
     super.initState();
-    users = List.from(dummyUsers); 
+    users = List.from(dummyUsers);
     _searchController.addListener(() {
-      setState(() {}); 
+      setState(() {});
     });
   }
 
@@ -46,7 +46,13 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   List<UserModel> get _filtered {
     final q = _searchController.text.toLowerCase().trim();
     if (q.isEmpty) return users;
-    return users.where((u) => u.name.toLowerCase().contains(q) || u.role.toLowerCase().contains(q)).toList();
+    return users
+        .where(
+          (u) =>
+              u.name.toLowerCase().contains(q) ||
+              u.role.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   void _openAddPopup() {
@@ -58,7 +64,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   }
 
   void _addUser(Map<String, dynamic> payload) {
-    final nextId = users.isEmpty ? 1 : (users.map((e) => e.id).reduce((a, b) => a > b ? a : b) + 1);
+    final nextId = users.isEmpty
+        ? 1
+        : (users.map((e) => e.id).reduce((a, b) => a > b ? a : b) + 1);
     final imagePath = payload['imagePath'] as String;
     late String finalImagePath;
 
@@ -83,7 +91,6 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
     final filtered = _filtered;
 
     return Scaffold(
@@ -94,7 +101,10 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.p16,
+                    vertical: AppSizes.p16,
+                  ),
                   child: AppHeader(title: 'PETUGAS', onToggle: toggleDrawer),
                 ),
 
@@ -104,7 +114,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                     children: [
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.p16,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(30),
@@ -117,12 +129,17 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                                   controller: _searchController,
                                   decoration: const InputDecoration(
                                     hintText: "cari.....",
-                                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
                                     border: InputBorder.none,
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.search, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.search,
+                                color: AppColors.textSecondary,
+                              ),
                             ],
                           ),
                         ),
@@ -134,9 +151,15 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                           padding: const EdgeInsets.all(AppSizes.p4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.textPrimary, width: 3),
+                            border: Border.all(
+                              color: AppColors.textPrimary,
+                              width: 3,
+                            ),
                           ),
-                          child: const Icon(Icons.add, color: AppColors.textPrimary),
+                          child: const Icon(
+                            Icons.add,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                     ],
@@ -147,7 +170,11 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
 
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(left: AppSizes.p16, right: AppSizes.p16, bottom: 120),
+                    padding: const EdgeInsets.only(
+                      left: AppSizes.p16,
+                      right: AppSizes.p16,
+                      bottom: 120,
+                    ),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
@@ -204,12 +231,16 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
               children: [
                 Text(
                   item.name,
-                  style: AppTextStyles.subtitle.copyWith(color: AppColors.textPrimary),
+                  style: AppTextStyles.subtitle.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Sebagai: ${item.role}',
-                  style: AppTextStyles.body.copyWith(color: AppColors.textPrimary.withOpacity(0.85)),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textPrimary.withOpacity(0.85),
+                  ),
                 ),
               ],
             ),
@@ -231,9 +262,20 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     }
 
     if (path.startsWith('http')) {
-      return Image.network(path, width: 70, height: 70, fit: BoxFit.cover, errorBuilder: (_, __, ___) {
-        return Container(width: 70, height: 70, color: Colors.grey[300], child: const Icon(Icons.person));
-      });
+      return Image.network(
+        path,
+        width: 70,
+        height: 70,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return Container(
+            width: 70,
+            height: 70,
+            color: Colors.grey[300],
+            child: const Icon(Icons.person),
+          );
+        },
+      );
     }
 
     if (path.startsWith('assets/')) {
@@ -244,7 +286,12 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       final file = File(path);
       return Image.file(file, width: 70, height: 70, fit: BoxFit.cover);
     } catch (e) {
-      return Container(width: 70, height: 70, color: Colors.grey[300], child: const Icon(Icons.person));
+      return Container(
+        width: 70,
+        height: 70,
+        color: Colors.grey[300],
+        child: const Icon(Icons.person),
+      );
     }
   }
 }

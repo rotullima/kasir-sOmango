@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'create_product_screen.dart';
 import 'dart:ui';
 import 'dart:typed_data';
-import '/widgets/alert_dialog.dart';
+import '../../widgets/confirm_dialog.dart';
 import '/constants/app_colors.dart';
 import '/constants/app_sizes.dart';
 import '/constants/app_textStyles.dart';

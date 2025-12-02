@@ -1,26 +1,18 @@
-// cashier_cust.dart
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_textStyles.dart';
 
-enum CashierDialogType {
-  payment,        // Rincian Pembayaran Tunai
-  addCustomer,    // Tambah Pelanggan Baru
-  editCustomer,   // Edit Pelanggan Baru
-}
+enum CashierDialogType { payment, addCustomer, editCustomer }
 
 class CashierCustomDialog extends StatelessWidget {
-  // Umum
   final CashierDialogType type;
   final VoidCallback? onCancel;
   final VoidCallback onConfirm;
 
-  // Untuk Payment
-  final String? amountPaid;      // "Rp 50.000,-"
-  final String? change;          // "Rp 9.900,-"
+  final String? amountPaid;
+  final String? change;
 
-  // Untuk Customer (Add & Edit)
   final TextEditingController? nameController;
   final TextEditingController? emailController;
   final String? initialName;
@@ -39,7 +31,6 @@ class CashierCustomDialog extends StatelessWidget {
     this.initialEmail,
   });
 
-  // Getter biar lebih mudah dipakai
   String get _title {
     switch (type) {
       case CashierDialogType.payment:
@@ -57,7 +48,7 @@ class CashierCustomDialog extends StatelessWidget {
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.primary, // warna kuning/orange seperti contoh
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [AppSizes.shadow],
       ),
@@ -65,7 +56,6 @@ class CashierCustomDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Judul
           Text(
             _title,
             style: AppTextStyles.subtitle.copyWith(
@@ -76,13 +66,11 @@ class CashierCustomDialog extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          // Isi sesuai tipe
           if (type == CashierDialogType.payment) ...[
             _buildReadOnlyField("Uang Tunai:", amountPaid ?? "-"),
             const SizedBox(height: 16),
             _buildReadOnlyField("Kembalian:", change ?? "-"),
           ] else ...[
-            // Tambah / Edit Pelanggan
             _buildLabel("Nama Pelanggan:"),
             const SizedBox(height: 8),
             _buildTextField(
@@ -103,7 +91,6 @@ class CashierCustomDialog extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // Tombol
           if (type == CashierDialogType.payment)
             _buildSingleButton()
           else
@@ -154,7 +141,8 @@ class CashierCustomDialog extends StatelessWidget {
     String? initialValue,
     TextInputType keyboardType = TextInputType.text,
   }) {
-    final effectiveController = controller ?? TextEditingController(text: initialValue);
+    final effectiveController =
+        controller ?? TextEditingController(text: initialValue);
     if (initialValue != null && controller == null) {
       effectiveController.text = initialValue;
     }
@@ -166,7 +154,10 @@ class CashierCustomDialog extends StatelessWidget {
         hintText: hintText,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
@@ -175,7 +166,6 @@ class CashierCustomDialog extends StatelessWidget {
     );
   }
 
-  // Tombol satu (hanya Selesai) → untuk pembayaran
   Widget _buildSingleButton() {
     return ElevatedButton(
       onPressed: onConfirm,
@@ -197,7 +187,6 @@ class CashierCustomDialog extends StatelessWidget {
     );
   }
 
-  // Tombol dua (Kembali + Selesai) → untuk pelanggan
   Widget _buildTwoButtons() {
     return Row(
       children: [
@@ -209,7 +198,9 @@ class CashierCustomDialog extends StatelessWidget {
               foregroundColor: AppColors.textPrimary,
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -230,7 +221,9 @@ class CashierCustomDialog extends StatelessWidget {
               foregroundColor: AppColors.textPrimary,
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,

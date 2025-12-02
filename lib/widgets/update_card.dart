@@ -5,6 +5,8 @@ import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_textStyles.dart';
 import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class UpdateCard extends StatelessWidget {
   final bool isStockEdit; // true = edit stok
@@ -161,22 +163,26 @@ class UpdateCard extends StatelessWidget {
                     if (isStockEdit) const SizedBox(height: 4),
                     if (isStockEdit)
                       TextField(
-                        controller: modalPriceController, 
-                        keyboardType: TextInputType.number,
-                        onChanged: onModalPriceChanged,
-                        decoration: InputDecoration(
+                        controller: modalPriceController,
+                        keyboardType: TextInputType.text,
+                        onChanged: (value) {
+                          onModalPriceChanged?.call(value);
+                        },
+                        decoration: const InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 8,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
                             borderSide: BorderSide.none,
                           ),
-                          prefixText: "Rp",
-                          suffixText: ",-",
+                          prefixText: "Rp ",
+                          suffixText: " ,-",
+                          hintText: "0",
+                          hintStyle: TextStyle(color: Colors.grey),
                         ),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kasir_s0mango/screens/customer/customer_screen.dart';
 import 'package:kasir_s0mango/screens/product/product_screen.dart';
 import 'package:kasir_s0mango/screens/report/report_screen.dart';
 import '../constants/app_colors.dart';
@@ -80,17 +81,37 @@ class AppDrawer extends StatelessWidget {
             ),
 
             SizedBox(height: 20),
-            Icon(Icons.add_circle_outline, color: AppColors.textPrimary),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CustomerScreen(),
+                  ),
+                );
+              },
+              child: Icon(
+                Icons.perm_contact_calendar_outlined,
+                color: AppColors.textPrimary,
+              ),
+            ),
+
             SizedBox(height: 20),
 
             GestureDetector(
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const CashierScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const CashierScreen(),
+                  ),
                 );
               },
-              child: Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
+              child: Icon(
+                Icons.shopping_cart_outlined,
+                color: AppColors.textPrimary,
+              ),
             ),
 
             SizedBox(height: 20),

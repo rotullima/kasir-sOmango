@@ -15,12 +15,13 @@ class CreateProductScreen extends ConsumerStatefulWidget {
   const CreateProductScreen({super.key});
 
   @override
-  ConsumerState<CreateProductScreen> createState() => _CreateProductScreenState();
+  ConsumerState<CreateProductScreen> createState() =>
+      _CreateProductScreenState();
 }
 
 class _CreateProductScreenState extends ConsumerState<CreateProductScreen> {
   File? selectedImage;
-  Uint8List? selectedImageBytes; 
+  Uint8List? selectedImageBytes;
 
   final nameController = TextEditingController();
   final priceController = TextEditingController();
@@ -39,6 +40,10 @@ class _CreateProductScreenState extends ConsumerState<CreateProductScreen> {
 
   void toggleDrawer() {
     setState(() => drawerOpen = !drawerOpen);
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> pickImage() async {
@@ -60,12 +65,24 @@ class _CreateProductScreenState extends ConsumerState<CreateProductScreen> {
   }
 
   Future<void> saveProduct() async {
-    if (nameController.text.isEmpty ||
-        priceController.text.isEmpty ||
-        categoryController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Lengkapi semua data dulu ya")),
-      );
+    if (nameController.text.isEmpty) {
+      _showError("Nama produk tidak boleh kosong.");
+      return;
+    }
+
+    if (priceController.text.isEmpty) {
+      _showError("Harga produk tidak boleh kosong.");
+      return;
+    }
+
+    final parsedPrice = double.tryParse(priceController.text);
+    if (parsedPrice == null) {
+      _showError("Harga harus berupa angka.");
+      return;
+    }
+
+    if (categoryController.text.isEmpty) {
+      _showError("Kategori produk tidak boleh kosong.");
       return;
     }
 
@@ -81,9 +98,11 @@ class _CreateProductScreenState extends ConsumerState<CreateProductScreen> {
             .uploadProductImage(selectedImageBytes!, fileName);
       }
 
-      await ref.read(productsProvider.notifier).addProduct(
+      await ref
+          .read(productsProvider.notifier)
+          .addProduct(
             nama: nameController.text,
-            harga: double.tryParse(priceController.text) ?? 0,
+            harga: parsedPrice,
             kategori: categoryController.text,
             gambar: uploadedUrl,
           );
@@ -92,13 +111,13 @@ class _CreateProductScreenState extends ConsumerState<CreateProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Produk berhasil ditambahkan')),
         );
-        Navigator.pop(context, true); 
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
       }
     } finally {
       setState(() => isLoading = false);
@@ -136,8 +155,9 @@ class _CreateProductScreenState extends ConsumerState<CreateProductScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.cardLargeRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.cardLargeRadius,
+                        ),
                         boxShadow: [AppSizes.shadow],
                       ),
                       child: Column(
