@@ -9,8 +9,7 @@ enum IconSide { left, right }
 
 class AddUserCard extends StatefulWidget {
   final VoidCallback onCancel;
-  final ValueChanged<Map<String, dynamic>>
-  onCreate; 
+  final ValueChanged<Map<String, dynamic>> onCreate;
 
   const AddUserCard({
     super.key,
@@ -23,6 +22,7 @@ class AddUserCard extends StatefulWidget {
 }
 
 class _AddUserCardState extends State<AddUserCard> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _roleController = TextEditingController();
@@ -45,19 +45,19 @@ class _AddUserCardState extends State<AddUserCard> {
   }
 
   void _submit() {
-    final name = _emailController.text.trim().isEmpty
-        ? 'User'
-        : _emailController.text.trim();
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
     final role = _roleController.text.trim().isEmpty
         ? 'kasir'
         : _roleController.text.trim();
-    final imagePath = _picked?.path ?? '';
+    // final imagePath = _picked?.path ?? '';
     widget.onCreate({
-      'name': name,
-      'role': role,
-      'imagePath': imagePath,
-      'imageBytes': _pickedBytes,
-    });
+  'nama': name,
+  'email': email,
+  'password': '12345678',
+  'role': role,
+  'imageBytes': _pickedBytes,
+});
   }
 
   @override
@@ -83,6 +83,14 @@ class _AddUserCardState extends State<AddUserCard> {
               ),
             ),
             const SizedBox(height: 16),
+
+            buildOverlayInput(
+              controller: _nameController,
+              hint: 'Nama',
+              icon: Icons.person_outline,
+              iconSide: IconSide.left,
+            ),
+            const SizedBox(height: 20),
 
             buildOverlayInput(
               controller: _emailController,
@@ -119,7 +127,7 @@ class _AddUserCardState extends State<AddUserCard> {
             buildImagePicker(
               hint: "Profil",
               icon: Icons.photo,
-              iconSide: IconSide.right, 
+              iconSide: IconSide.right,
               picked: _picked,
               onTap: _pickImage,
             ),
@@ -248,7 +256,7 @@ class _AddUserCardState extends State<AddUserCard> {
                   ),
                 ),
                 isExpanded: true,
-                iconSize: 0, 
+                iconSize: 0,
                 alignment: Alignment.center,
                 onChanged: onChanged,
                 items: items.map((e) {

@@ -13,6 +13,7 @@ import '/widgets/app_drawer.dart';
 import '/providers/product_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../stock/stock_screen.dart';
+import '/providers/stock_provider.dart';
 
 class ProductScreen extends ConsumerStatefulWidget {
   const ProductScreen({super.key});
@@ -223,6 +224,8 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
                           await ref
                               .read(productsProvider.notifier)
                               .deleteProduct(produkDihapus!['produk_id']);
+
+                              ref.refresh(stockListProvider);
                           setState(() => produkDihapus = null);
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -349,8 +352,10 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
                         );
 
                         if (result == true) {
-                          ref.read(productsProvider.notifier).loadProducts();
-                        }
+  ref.read(productsProvider.notifier).loadProducts();
+  ref.refresh(stockListProvider);
+}
+
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.textSecondary,

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +7,7 @@ import '/constants/app_textStyles.dart';
 import '/widgets/app_header.dart';
 import '/widgets/app_drawer.dart';
 import '/widgets/add_user.dart';
-import '/dummy/user_dummy.dart';
-import '/models/user_model.dart';
+import '../../providers/user_provider.dart';
 
 class UsersScreen extends ConsumerStatefulWidget {
   const UsersScreen({super.key});
@@ -21,77 +19,21 @@ class UsersScreen extends ConsumerStatefulWidget {
 class _UsersScreenState extends ConsumerState<UsersScreen> {
   bool isOpen = false;
   bool showAddPopup = false;
-  final TextEditingController _searchController = TextEditingController();
-  List<UserModel> users = [];
+  final _searchController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    users = List.from(dummyUsers);
-    _searchController.addListener(() {
-      setState(() {});
-    });
-  }
+  void toggleDrawer() => setState(() => isOpen = !isOpen);
 
-  void toggleDrawer() {
-    setState(() => isOpen = !isOpen);
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  List<UserModel> get _filtered {
-    final q = _searchController.text.toLowerCase().trim();
-    if (q.isEmpty) return users;
-    return users
-        .where(
-          (u) =>
-              u.name.toLowerCase().contains(q) ||
-              u.role.toLowerCase().contains(q),
-        )
-        .toList();
-  }
-
-  void _openAddPopup() {
-    setState(() => showAddPopup = true);
-  }
-
-  void _closeAddPopup() {
-    setState(() => showAddPopup = false);
-  }
+  void _openAddPopup() => setState(() => showAddPopup = true);
+  void _closeAddPopup() => setState(() => showAddPopup = false);
 
   void _addUser(Map<String, dynamic> payload) {
-    final nextId = users.isEmpty
-        ? 1
-        : (users.map((e) => e.id).reduce((a, b) => a > b ? a : b) + 1);
-    final imagePath = payload['imagePath'] as String;
-    late String finalImagePath;
-
-    if (imagePath.isNotEmpty) {
-      finalImagePath = imagePath;
-    } else {
-      finalImagePath = 'assets/avatar_placeholder.png';
-    }
-
-    final newUser = UserModel(
-      id: nextId,
-      name: payload['name'] as String,
-      role: payload['role'] as String,
-      imagePath: finalImagePath,
-    );
-
-    setState(() {
-      users.insert(0, newUser);
-      showAddPopup = false;
-    });
+    ref.read(createUserProvider(payload));
+    setState(() => showAddPopup = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
+    final petugasAsync = ref.watch(userListProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -101,10 +43,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p16,
-                    vertical: AppSizes.p16,
-                  ),
+                  padding: const EdgeInsets.all(AppSizes.p16),
                   child: AppHeader(title: 'PETUGAS', onToggle: toggleDrawer),
                 ),
 
@@ -114,52 +53,41 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                     children: [
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.p16,
-                          ),
+                          height: 45,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          height: 45,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _searchController,
-                                  decoration: const InputDecoration(
-                                    hintText: "cari.....",
-                                    hintStyle: TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    border: InputBorder.none,
-                                  ),
-                                ),
-                              ),
-                              const Icon(
-                                Icons.search,
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: const InputDecoration(
+                              hintText: "cari.....",
+                              hintStyle: TextStyle(
                                 color: AppColors.textSecondary,
                               ),
-                            ],
+                              border: InputBorder.none,
+                            ),
+                            onChanged: (_) => setState(() {}),
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSizes.p12),
+                      const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _openAddPopup,
                         child: Container(
-                          padding: const EdgeInsets.all(AppSizes.p4),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.textPrimary,
                               width: 3,
+                              color: AppColors.textPrimary,
                             ),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
                             Icons.add,
-                            color: AppColors.textPrimary,
-                          ),
+                            color: AppColors.textPrimary
+                            ),
                         ),
                       ),
                     ],
@@ -169,17 +97,31 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 const SizedBox(height: AppSizes.sectionGap),
 
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: AppSizes.p16,
-                      right: AppSizes.p16,
-                      bottom: 120,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      return _buildUserCard(item);
+                  child: petugasAsync.when(
+                    data: (data) {
+                      final q = _searchController.text.toLowerCase().trim();
+                      final filtered = q.isEmpty
+                          ? data
+                          : data.where((u) {
+                              return (u['peran'] ?? '')
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(q);
+                            }).toList();
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 120,
+                        ),
+                        itemCount: filtered.length,
+                        itemBuilder: (_, i) => _buildUserCard(filtered[i]),
+                      );
                     },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text(e.toString())),
                   ),
                 ),
               ],
@@ -192,7 +134,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                   child: Container(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black26,
                     alignment: Alignment.center,
                     child: AddUserCard(
                       onCancel: _closeAddPopup,
@@ -207,10 +149,12 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     );
   }
 
-  Widget _buildUserCard(UserModel item) {
+  Widget _buildUserCard(Map<String, dynamic> item) {
+    final avatar = item['avatar_url'];
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-      padding: const EdgeInsets.all(AppSizes.p16),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppSizes.cardSmallRadius),
@@ -221,77 +165,33 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.cardSmallRadius),
-            child: _buildAvatar(item),
+            child: avatar != null
+                ? Image.network(
+                    avatar,
+                    width: 85,
+                    height: 85,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 85,
+                    height: 85,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.person),
+                  ),
           ),
-          const SizedBox(width: AppSizes.p12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: AppTextStyles.subtitle.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Sebagai: ${item.role}',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textPrimary.withOpacity(0.85),
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item['nama'] ?? '-', style: AppTextStyles.subtitle.copyWith(color: AppColors.textPrimary)),
+
+              const SizedBox(height: 5),
+
+              Text('Sebagai: ${item['peran']}', style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+            ],
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildAvatar(UserModel item) {
-    final path = item.imagePath;
-    if (path.isEmpty) {
-      return Container(
-        width: 70,
-        height: 70,
-        color: Colors.grey[300],
-        child: const Icon(Icons.person),
-      );
-    }
-
-    if (path.startsWith('http')) {
-      return Image.network(
-        path,
-        width: 70,
-        height: 70,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          return Container(
-            width: 70,
-            height: 70,
-            color: Colors.grey[300],
-            child: const Icon(Icons.person),
-          );
-        },
-      );
-    }
-
-    if (path.startsWith('assets/')) {
-      return Image.asset(path, width: 70, height: 70, fit: BoxFit.cover);
-    }
-
-    try {
-      final file = File(path);
-      return Image.file(file, width: 70, height: 70, fit: BoxFit.cover);
-    } catch (e) {
-      return Container(
-        width: 70,
-        height: 70,
-        color: Colors.grey[300],
-        child: const Icon(Icons.person),
-      );
-    }
   }
 }

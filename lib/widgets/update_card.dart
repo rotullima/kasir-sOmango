@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 
 class UpdateCard extends StatelessWidget {
   final bool isStockEdit; // true = edit stok
-  final String productName;
+  final String productName; 
   final int currentStock;
   final double? modalPrice;
   final double? sellingPrice;

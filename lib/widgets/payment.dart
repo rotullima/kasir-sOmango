@@ -6,13 +6,13 @@ import '../screens/cashier/cashier_screen.dart';
 void showPaymentSuccessReceipt({
   required BuildContext context,
   required String customerName,
-  required List<Map<String, dynamic>> items, 
+  required List<Map<String, dynamic>> items,
   required int subtotal,
   required String transactionNo,
   required int customerDiscount,
   required int productDiscount,
   required int totalPayment,
-  required String paymentMethod, 
+  required String paymentMethod,
   int? cashReceived,
   required String cashierName,
 }) {
@@ -181,8 +181,7 @@ void showPaymentSuccessReceipt({
 
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const CashierScreen(),
