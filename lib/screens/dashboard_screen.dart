@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../dummy/dashboard_dummy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_textStyles.dart';
@@ -9,16 +9,25 @@ import '../widgets/bar_chart.dart';
 import '../widgets/line_chart.dart';
 import '../widgets/section_card.dart';
 import '../widgets/table.dart';
+import '../providers/dashboard_provider.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool isOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(dashboardProvider.notifier).loadDashboard();
+    });
+  }
 
   void toggleDrawer() {
     setState(() => isOpen = !isOpen);
@@ -26,6 +35,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(dashboardProvider);
+
+    if (state.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -52,26 +67,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // const SizedBox(height: AppSizes.sectionGap),
-
                         SectionCard(
                           title: 'Penjualan Harian',
-                          child: AppBarChart(data: dailySalesDummy),
+                          child: AppBarChart(data: state.dailySales),
                         ),
 
                         const SizedBox(height: AppSizes.sectionGap),
 
                         SectionCard(
                           title: 'Penjualan Bulanan',
-                          child: AppLineChart(data: monthlySalesDummy),
+                          child: AppLineChart(data: state.monthlySales),
                         ),
 
                         const SizedBox(height: AppSizes.sectionGap),
 
                         SectionCard(
                           title: 'Daftar Transaksi Terbaru',
-                          child: TransactionTable(
-                            data: recentTransactionsDummy,
-                          ),
+                          child: TransactionTable(data: state.transactions),
                         ),
 
                         const SizedBox(height: AppSizes.sectionGap),
@@ -83,19 +95,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               AppSizes.cardLargeRadius,
                             ),
                           ),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
                               vertical: 24,
                               horizontal: 16,
                             ),
                             child: Center(
-                              child: Text(
-                                'Total Pelanggan Aktif:',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Total Pelanggan Aktif (30 Hari)',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${state.activeCustomers}',
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -106,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         SectionCard(
                           title: 'Total Stok Produk',
                           subtitle:
-                              'Total: ${productStockDummy.fold<int>(0, (sum, p) => sum + p.stock)} items',
+                              'Total: ${state.productStocks.fold<int>(0, (sum, p) => sum + p.stock)} items',
                           child: GridView.count(
                             crossAxisCount: 2,
                             shrinkWrap: true,
@@ -114,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                             childAspectRatio: 1.6,
-                            children: productStockDummy.map((p) {
+                            children: state.productStocks.map((p) {
                               return _stockCard(p.name, 'stok: ${p.stock}');
                             }).toList(),
                           ),
