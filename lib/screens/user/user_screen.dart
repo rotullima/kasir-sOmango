@@ -103,7 +103,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                       final filtered = q.isEmpty
                           ? data
                           : data.where((u) {
-                              return (u['peran'] ?? '')
+                              return (u['nama'] ?? '')
                                   .toString()
                                   .toLowerCase()
                                   .contains(q);

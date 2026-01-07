@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class UserService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// GET semua petugas
   Future<List<Map<String, dynamic>>> getUser() async {
     final res = await _supabase
         .from('profil')
@@ -14,7 +13,6 @@ class UserService {
     return List<Map<String, dynamic>>.from(res);
   }
 
-  /// CREATE petugas + upload avatar
   Future<void> createUser({
     required String nama,
     required String email,
@@ -22,7 +20,6 @@ class UserService {
     required String role,
     Uint8List? avatarBytes,
   }) async {
-    // 1. create auth user
     final authRes = await _supabase.auth.admin.createUser(
       AdminUserAttributes(email: email, password: password, emailConfirm: true),
     );
@@ -30,7 +27,6 @@ class UserService {
     final userId = authRes.user!.id;
     String? avatarUrl;
 
-    // 2. upload avatar (kalau ada)
     if (avatarBytes != null) {
       final filePath = '$userId/avatar.png';
 
@@ -45,7 +41,6 @@ class UserService {
       avatarUrl = _supabase.storage.from('profil').getPublicUrl(filePath);
     }
 
-    // 3. insert profil
     await _supabase.from('profil').insert({
       'user_id': userId,
       'nama': nama,

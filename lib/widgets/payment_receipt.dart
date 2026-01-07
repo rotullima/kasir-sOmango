@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '/constants/app_colors.dart';
-import '../screens/cashier/cashier_screen.dart';
+import 'package:printing/printing.dart';
+import '../utils/print_receipt.dart';
 
 void showPaymentSuccessReceipt({
   required BuildContext context,
   required String customerName,
+  required String transactionNo,
   required List<Map<String, dynamic>> items,
   required int subtotal,
-  required String transactionNo,
   required int customerDiscount,
   required int productDiscount,
   required int totalPayment,
   required String paymentMethod,
-  int? cashReceived,
   required String cashierName,
+  int? cashReceived,
 }) {
   final now = DateTime.now();
   final dateStr = DateFormat('yyyy-MM-dd').format(now);
   final timeStr = DateFormat('HH:mm:ss').format(now);
-
-  int hour = now.hour;
-  String shiftCode = hour >= 1 && hour <= 12 ? "1" : "2";
-  String transactionNo = "$shiftCode-${now.millisecondsSinceEpoch % 5000}";
 
   showDialog(
     context: context,
@@ -56,7 +53,6 @@ void showPaymentSuccessReceipt({
                       color: AppColors.textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 12),
                   _dashedLine(),
                   const SizedBox(height: 12),
@@ -64,40 +60,15 @@ void showPaymentSuccessReceipt({
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        dateStr,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        customerName,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
+                      Text(dateStr, style: _textStyle()),
+                      Text(customerName, style: _textStyleBold()),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        timeStr,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        "No. $transactionNo",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
+                      Text(timeStr, style: _textStyle()),
+                      Text("No. $transactionNo", style: _textStyle()),
                     ],
                   ),
 
@@ -115,19 +86,13 @@ void showPaymentSuccessReceipt({
                           SizedBox(
                             width: 150,
                             child: Text(
-                              "${item['name']} \n${item['qty']} x ${NumberFormat('#,###').format(item['price'])}",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textPrimary,
-                              ),
+                              "${item['name']}\n${item['qty']} x ${NumberFormat('#,###').format(item['price'])}",
+                              style: _textStyle(),
                             ),
                           ),
                           Text(
                             "Rp.${NumberFormat('#,###').format(total)},-",
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.textPrimary,
-                            ),
+                            style: _textStyle(),
                           ),
                         ],
                       ),
@@ -138,29 +103,26 @@ void showPaymentSuccessReceipt({
                   _dashedLine(),
                   const SizedBox(height: 16),
 
-                  _priceRow("Diskon", customerDiscount + productDiscount),
-                  _priceRow("Total", subtotal),
+                  _priceRow("Subtotal", subtotal),
+                  if (customerDiscount + productDiscount > 0)
+                    _priceRow("Diskon", customerDiscount + productDiscount),
+                  _priceRowBold("Total", totalPayment),
 
-                  const SizedBox(height: 6),
-                  _priceRow("Bayar", cashReceived ?? totalPayment),
+                  const SizedBox(height: 8),
                   _priceRow(
-                    "Kembalian",
-                    (cashReceived ?? totalPayment) - totalPayment,
+                    "Bayar ${paymentMethod == 'Tunai' ? '' : '(QRIS)'}",
+                    cashReceived ?? totalPayment,
                   ),
+                  if (paymentMethod == 'Tunai')
+                    _priceRow("Kembalian", (cashReceived ?? 0) - totalPayment),
 
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        "Petugas: $cashierName",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      "Petugas: $cashierName",
+                      style: _textStyleBold(size: 13),
+                    ),
                   ),
                 ],
               ),
@@ -180,15 +142,31 @@ void showPaymentSuccessReceipt({
             const SizedBox(height: 16),
 
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CashierScreen(),
-                  ),
+              onPressed: () async {
+                final pdf = await generateReceiptPdf(
+                  customerName: customerName,
+                  transactionNo: transactionNo,
+                  items: items,
+                  subtotal: subtotal,
+                  customerDiscount: customerDiscount,
+                  productDiscount: productDiscount,
+                  totalPayment: totalPayment,
+                  paymentMethod: paymentMethod,
+                  cashierName: cashierName,
+                  cashReceived: cashReceived,
                 );
+
+                await Printing.layoutPdf(
+                  onLayout: (format) async => pdf.save(),
+                );
+                if (context.mounted) {
+      Navigator.pop(context); 
+      Navigator.pop(context); 
+    }
               },
 
+              icon: const Icon(Icons.print),
+              label: const Text("Cetak Struk", style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.textSecondary,
                 foregroundColor: AppColors.textPrimary,
@@ -200,11 +178,6 @@ void showPaymentSuccessReceipt({
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              icon: const Icon(Icons.receipt_long),
-              label: Text(
-                "Cetak Struk",
-                style: TextStyle(fontSize: 16, color: AppColors.textPrimary),
-              ),
             ),
           ],
         ),
@@ -212,6 +185,13 @@ void showPaymentSuccessReceipt({
     ),
   );
 }
+
+TextStyle _textStyle() => TextStyle(fontSize: 14, color: AppColors.textPrimary);
+TextStyle _textStyleBold({double size = 14}) => TextStyle(
+  fontSize: size,
+  fontWeight: FontWeight.w600,
+  color: AppColors.textPrimary,
+);
 
 Widget _dashedLine() {
   return Row(
@@ -234,21 +214,26 @@ Widget _priceRow(String title, int value) {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        Text(title, style: _textStyle()),
         Text(
           "Rp.${NumberFormat('#,###').format(value)},-",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
+          style: _textStyle(),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _priceRowBold(String title, int value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: _textStyleBold()),
+        Text(
+          "Rp.${NumberFormat('#,###').format(value)},-",
+          style: _textStyleBold(),
         ),
       ],
     ),

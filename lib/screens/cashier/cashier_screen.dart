@@ -5,10 +5,8 @@ import '/widgets/app_drawer.dart';
 import '/widgets/product_card.dart';
 import '/constants/app_colors.dart';
 import 'package:kasir_s0mango/widgets/cashier_cust.dart';
-import 'package:kasir_s0mango/models/cashier_model.dart';
 import 'package:kasir_s0mango/models/cashier_cust.dart';
-import 'package:kasir_s0mango/dummy/cashier_dummy.dart';
-import 'package:kasir_s0mango/dummy/cashier_customer_dummy.dart';
+import 'package:kasir_s0mango/providers/cashier_provider.dart';
 import 'package:kasir_s0mango/screens/cashier/cart_summary_screen.dart';
 
 class CashierScreen extends ConsumerStatefulWidget {
@@ -20,7 +18,6 @@ class CashierScreen extends ConsumerStatefulWidget {
 
 class _CashierScreenState extends ConsumerState<CashierScreen> {
   CashierCustModel? _selectedCustomer;
-
   final TextEditingController _searchController = TextEditingController();
   bool isOpen = false;
 
@@ -28,7 +25,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     setState(() => isOpen = !isOpen);
   }
 
-  void _openAddCustomer() {
+  Future<void> _openAddCustomer() async {
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
 
@@ -41,55 +38,80 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
           nameController: nameCtrl,
           emailController: emailCtrl,
           onCancel: () => Navigator.pop(context),
-          onConfirm: () {
-            setState(() {
-              final newCustomer = CashierCustModel(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: nameCtrl.text,
-                email: emailCtrl.text,
-                points: 0,
+          onConfirm: () async {
+            if (nameCtrl.text.isEmpty) return;
+
+            try {
+              final newCustomer = await ref
+                  .read(cashierServiceProvider)
+                  .addCustomer(name: nameCtrl.text, email: emailCtrl.text);
+
+              ref.invalidate(customersProvider);
+
+              setState(() {
+                _selectedCustomer = null;
+              });
+
+              if (mounted) Navigator.pop(context);
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Gagal tambah pelanggan: $e")),
               );
-
-              dummyCustomers.add(newCustomer);
-
-              _selectedCustomer = newCustomer;
-            });
-
-            Navigator.pop(context);
+            }
           },
         ),
       ),
     );
   }
 
-  List<ProductModel> filteredProducts = dummyProducts;
-
-  Map<ProductModel, int> cartItems = {};
-  int get totalItems => cartItems.values.fold(0, (sum, qty) => sum + qty);
-
   @override
   void initState() {
     super.initState();
-    filteredProducts = dummyProducts;
-
     _searchController.addListener(() {
-      final query = _searchController.text.toLowerCase();
-      setState(() {
-        filteredProducts = dummyProducts
-            .where((p) => p.name.toLowerCase().contains(query))
-            .toList();
-      });
+      setState(() {});
     });
   }
 
-  void addToCart(ProductModel product) {
-    setState(() {
-      cartItems[product] = (cartItems[product] ?? 0) + 1;
-    });
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final productsAsync = ref.watch(productsProvider);
+    final customersAsync = ref.watch(customersProvider);
+    final cart = ref.watch(cartProvider);
+    final cartNotifier = ref.read(cartProvider.notifier);
+
+    final List<CashierCustModel> allCustomers = customersAsync.when(
+      data: (customers) {
+        final list = [
+          CashierCustModel(id: null, name: "Walk In", email: "", points: 0),
+          ...customers,
+        ];
+
+        if (_selectedCustomer != null) {
+          final matched = list.firstWhere(
+            (c) => c.id == _selectedCustomer!.id,
+            orElse: () => list.first,
+          );
+          _selectedCustomer = matched;
+        }
+
+        return list;
+      },
+      loading: () => [],
+      error: (_, __) => [
+        CashierCustModel(id: null, name: "Walk In", email: "", points: 0),
+      ],
+    );
+
+    final CashierCustModel? currentValue = allCustomers.isEmpty
+        ? null
+        : (_selectedCustomer ?? allCustomers.first);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -104,25 +126,22 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: Row(
                     children: [
                       Expanded(
                         flex: 3,
                         child: DropdownButtonHideUnderline(
                           child: DropdownButtonFormField<CashierCustModel>(
-                            value: _selectedCustomer,
+                            value: currentValue,
                             icon: const SizedBox.shrink(),
-
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
                             ),
-
                             dropdownColor: Colors.white,
                             menuMaxHeight: 250,
-
+                            isExpanded: true,
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: AppColors.primary,
@@ -136,24 +155,25 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-
-                            hint: const Text(
-                              "Masukkan Nama Pelanggan...",
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-
-                            items: dummyCustomers.map((cust) {
-                              return DropdownMenuItem(
+                            hint: customersAsync.isLoading
+                                ? const Text(
+                                    "Loading pelanggan...",
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  )
+                                : const Text("Pilih Pelanggan..."),
+                            items: allCustomers.map((cust) {
+                              return DropdownMenuItem<CashierCustModel>(
                                 value: cust,
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 8,
                                   ),
                                   child: Text(
-                                    "${cust.name} (${cust.email})",
+                                    cust.id == null
+                                        ? cust.name
+                                        : "${cust.name} (${cust.email})",
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
@@ -165,28 +185,32 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                             }).toList(),
 
                             selectedItemBuilder: (context) {
-                              return dummyCustomers.map((cust) {
-                                return Text(
-                                  cust.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                              return allCustomers.map<Widget>((cust) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 1,
+                                  ),
+                                  child: Text(
+                                    cust.name,
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 );
                               }).toList();
                             },
 
-                            onChanged: (val) =>
-                                setState(() => _selectedCustomer = val),
+                            onChanged: allCustomers.isEmpty
+                                ? null
+                                : (val) =>
+                                      setState(() => _selectedCustomer = val),
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
                       Expanded(
                         flex: 2,
                         child: ElevatedButton(
@@ -198,12 +222,9 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                               horizontal: 12,
                               vertical: 17,
                             ),
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            elevation: 0,
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -231,7 +252,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      Text(
+                      const Text(
                         "Pilih Produk",
                         style: TextStyle(
                           fontSize: 16,
@@ -244,33 +265,24 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                         flex: 2,
                         child: TextField(
                           controller: _searchController,
-                          style: const TextStyle(fontSize: 12),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
                           decoration: InputDecoration(
                             hintText: "search...",
-                            hintStyle: TextStyle(
+                            hintStyle: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
                             ),
-                            isDense: true,
                             filled: true,
                             fillColor: AppColors.primary,
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 10,
-                                right: 4,
-                              ),
-                              child: Icon(
-                                Icons.search,
-                                size: 16,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            prefixIconConstraints: const BoxConstraints(
-                              minWidth: 30,
-                              minHeight: 0,
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              size: 16,
+                              color: AppColors.textSecondary,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10,
                               horizontal: 12,
                             ),
                             border: OutlineInputBorder(
@@ -287,26 +299,44 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                 const SizedBox(height: 16),
 
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 1,
-                          crossAxisSpacing: 20,
-                          mainAxisSpacing: 20,
-                        ),
-                    itemCount: filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = filteredProducts[index];
-                      return GestureDetector(
-                        onTap: () => addToCart(product),
-                        child: StockCard(
-                          name: product.name,
-                          displayValue: product.price,
-                          image: product.image,
-                          showActions: false,
-                        ),
+                  child: productsAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (err, stack) => Center(child: Text("Error: $err")),
+                    data: (products) {
+                      final query = _searchController.text.toLowerCase();
+                      final filtered = products
+                          .where((p) => p.name.toLowerCase().contains(query))
+                          .toList();
+
+                      if (filtered.isEmpty) {
+                        return const Center(
+                          child: Text("Produk tidak ditemukan"),
+                        );
+                      }
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 1,
+                              crossAxisSpacing: 20,
+                              mainAxisSpacing: 20,
+                            ),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final product = filtered[index];
+                          return GestureDetector(
+                            onTap: () => cartNotifier.add(product),
+                            child: StockCard(
+                              name: product.name,
+                              displayValue: product.price,
+                              image: product.image,
+                              showActions: false,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -324,7 +354,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      if (cartItems.isEmpty) {
+                      if (cart.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Keranjang masih kosong"),
@@ -333,24 +363,16 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                         return;
                       }
 
-                      if (_selectedCustomer == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Pilih pelanggan dulu")),
-                        );
-                        return;
-                      }
-
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CartSummaryScreen(
-                            customer: _selectedCustomer!,
-                            cartItems: Map.from(cartItems),
-                          ),
+                          builder: (_) =>
+                              CartSummaryScreen(customer: _selectedCustomer!),
                         ),
-                      );
+                      ).then((_) {
+                        setState(() {});
+                      });
                     },
-
                     child: Container(
                       width: 90,
                       height: 90,
@@ -365,7 +387,6 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                           ),
                         ],
                       ),
-
                       child: const Icon(
                         Icons.shopping_cart_outlined,
                         size: 40,
@@ -373,8 +394,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                       ),
                     ),
                   ),
-
-                  if (totalItems > 0)
+                  if (cartNotifier.totalItems > 0)
                     Positioned(
                       right: -2,
                       top: -2,
@@ -385,7 +405,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: Text(
-                          "$totalItems",
+                          "${cartNotifier.totalItems}",
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 15,
