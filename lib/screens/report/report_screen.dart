@@ -9,6 +9,7 @@ import '../../dummy/report_dummy.dart';
 import '/widgets/section_card.dart';
 import '/widgets/bar_chart.dart';
 import '/widgets/table.dart';
+import '../../providers/report_provider.dart';
 
 final reportPeriodProvider = StateProvider<String>((ref) => 'Harian');
 
@@ -27,10 +28,18 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
   @override
+void initState() {
+  super.initState();
+  Future.microtask(() {
+    ref.read(reportProvider.notifier).loadReport(false); // harian default
+  });
+}
+
+
+  @override
   Widget build(BuildContext context) {
     final period = ref.watch(reportPeriodProvider);
-    final pendapatan = period == 'Harian' ? dailyIncome : monthlyIncome;
-    final labaRugi = pendapatan - totalModal;
+    final report = ref.watch(reportProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -53,9 +62,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () =>
-                              ref.read(reportPeriodProvider.notifier).state =
-                                  'Harian',
+                          onTap: () {
+  ref.read(reportPeriodProvider.notifier).state = 'Harian';
+  ref.read(reportProvider.notifier).loadReport(false);
+},
+
+
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
@@ -88,9 +100,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
                       Expanded(
                         child: GestureDetector(
-                          onTap: () =>
-                              ref.read(reportPeriodProvider.notifier).state =
-                                  'Bulanan',
+                          onTap: () {
+  ref.read(reportPeriodProvider.notifier).state = 'Bulanan';
+  ref.read(reportProvider.notifier).loadReport(true);
+},
+
+
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
@@ -148,7 +163,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                       Expanded(
                         child: _summaryCard(
                           "Modal",
-                          totalModal,
+                          report.modal,
                           AppColors.textSecondary,
                         ),
                       ),
@@ -156,7 +171,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                       Expanded(
                         child: _summaryCard(
                           "Pendapatan",
-                          pendapatan,
+                          report.pendapatan,
                           AppColors.textSecondary,
                         ),
                       ),
@@ -185,11 +200,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         ),
                         const Spacer(),
                         Text(
-                          formatRupiah(labaRugi),
+                          formatRupiah(report.labaRugi),
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: labaRugi >= 0
+                            color: report.labaRugi >= 0
                                 ? Colors.green[800]
                                 : Colors.red[800],
                           ),
@@ -212,7 +227,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                           SectionCard(
                             title: 'Penjualan Hari Ini',
                             trailing: Text(
-                              'Rp. ${formatRupiah(pendapatan)},00',
+                              'Rp. ${formatRupiah(report.pendapatan)},00',
                               style: AppTextStyles.subtitle
                                   .copyWith(fontWeight: FontWeight.bold)
                                   .copyWith(color: AppColors.textSecondary),

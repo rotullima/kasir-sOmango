@@ -1,9 +1,9 @@
  import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '/config/supabase_config.dart';
 import '../models/dashboard_model.dart';
 
 class DashboardService {
-  final supabase = Supabase.instance.client;
+  final supabase = SupabaseConfig.client;
 
   Future<List<DailySales>> getDailySales() async {
     final res = await supabase
