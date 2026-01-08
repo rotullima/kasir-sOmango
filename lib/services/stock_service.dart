@@ -28,4 +28,44 @@ class StockService {
         .update({"stok": newStock, "modal_produk": modalPrice})
         .eq("stok_id", stokId);
   }
+
+  Future<void> reduceStockAfterSale({
+  required int produkId,
+  required int qty,
+  int? pelangganId,
+}) async {
+  // 1️⃣ Ambil stok berdasarkan produk
+  final stockData = await supabase
+      .from("stok")
+      .select("stok_id, stok")
+      .eq("produk_id", produkId)
+      .single();
+
+  final int stokId = stockData["stok_id"];
+  final int currentStock = stockData["stok"];
+
+  // 2️⃣ Validasi
+  if (currentStock < qty) {
+    throw Exception("Stok tidak mencukupi");
+  }
+
+  // 3️⃣ Hitung stok baru
+  final int newStock = currentStock - qty;
+
+  // 4️⃣ Update stok
+  await supabase
+      .from("stok")
+      .update({"stok": newStock})
+      .eq("stok_id", stokId);
+
+  // 5️⃣ Insert ke riwayat_stok
+  await supabase.from("riwayat_stok").insert({
+    "stok_id": stokId,
+    "produk_id": produkId,
+    "pelanggan_id": pelangganId,
+    "jumlah_perubahan": -qty, // 🔥 keluar = negatif
+    "created_at": DateTime.now().toIso8601String(),
+  });
+}
+
 }

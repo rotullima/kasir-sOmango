@@ -328,7 +328,23 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
                         itemBuilder: (context, index) {
                           final product = filtered[index];
                           return GestureDetector(
-                            onTap: () => cartNotifier.add(product),
+                            onTap: () {
+                              final currentQty = cart[product] ?? 0;
+
+                              if (currentQty >= product.stock) {
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Stok produk sudah habis"),
+                                    ),
+                                  );
+                                return;
+                              }
+
+                              cartNotifier.add(product);
+                            },
+
                             child: StockCard(
                               name: product.name,
                               displayValue: product.price,

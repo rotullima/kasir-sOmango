@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kasir_s0mango/models/cashier_model.dart';
 import 'package:kasir_s0mango/models/cashier_cust.dart';
+import 'stock_service.dart';
 
 class CashierService {
   final _client = Supabase.instance.client;
@@ -8,7 +9,7 @@ class CashierService {
   Future<List<ProductModel>> getProducts() async {
     final response = await _client
         .from('produk')
-        .select()
+        .select('produk_id, nama_produk, harga, gambar_produk, stok(stok)')
         .order('nama_produk', ascending: true);
 
     return (response as List<dynamic>)
@@ -18,6 +19,11 @@ class CashierService {
             name: data['nama_produk'] ?? 'produk tanpa nama',
             price: (data['harga'] as num).toInt(),
             image: data['gambar_produk'] ?? 'assets/placeholder_produk.png',
+            stock: (data['stok'] is List && data['stok'].isNotEmpty)
+    ? (data['stok'][0]['stok'] as num).toInt()
+    : 0,
+
+
           ),
         )
         .toList();
@@ -60,41 +66,41 @@ class CashierService {
   }
 
   Future<Map<String, String>> saveTransaction({
-  required CashierCustModel customer,
-  required Map<ProductModel, int> items,
-  required int subtotal,
-  required int customerDiscount,
-  required int productDiscount,
-  required int totalPayment,
-  required String paymentMethod,
-  int? cashReceived,
-}) async {
-  final userId = _client.auth.currentUser!.id;
+    required CashierCustModel customer,
+    required Map<ProductModel, int> items,
+    required int subtotal,
+    required int customerDiscount,
+    // required int productDiscount,
+    required int totalPayment,
+    required String paymentMethod,
+    int? cashReceived,
+  }) async {
+    final userId = _client.auth.currentUser!.id;
 
-  final profile = await _client
-      .from('profil')
-      .select('nama')
-      .eq('user_id', userId)
-      .maybeSingle();
+    final profile = await _client
+        .from('profil')
+        .select('nama')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-  final kasirName = profile?['nama'] ?? 'Kasir';
+    final kasirName = profile?['nama'] ?? 'Kasir';
 
-  final String nomorTransaksi = _generateTransactionNo();
+    final String nomorTransaksi = _generateTransactionNo();
 
-  final penjualanResponse = await _client
-      .from('penjualan')
-      .insert({
-        'total_harga': totalPayment,
-        'pelanggan_id': customer.id != null ? int.parse(customer.id!) : null,
-        'poin_dipakai': customerDiscount,
-        'nomor_transaksi': nomorTransaksi,
-        'metode_pembayaran': paymentMethod.toLowerCase(),
-        'kasir_id': userId,
-      })
-      .select()
-      .single();
+    final penjualanResponse = await _client
+        .from('penjualan')
+        .insert({
+          'total_harga': totalPayment,
+          'pelanggan_id': customer.id != null ? int.parse(customer.id!) : null,
+          'poin_dipakai': customerDiscount,
+          'nomor_transaksi': nomorTransaksi,
+          'metode_pembayaran': paymentMethod.toLowerCase(),
+          'kasir_id': userId,
+        })
+        .select()
+        .single();
 
-  final int penjualanId = penjualanResponse['penjualan_id'];
+    final int penjualanId = penjualanResponse['penjualan_id'];
 
     final List<Map<String, dynamic>> details = [];
     for (var entry in items.entries) {
@@ -106,9 +112,9 @@ class CashierService {
         'produk_id': int.parse(product.id),
         'jumlah_produk': qty,
         'subtotal': product.price * qty,
-        'diskon_produk': productDiscount > 0
-            ? (productDiscount / items.length).round()
-            : 0,
+        //'diskon_produk': productDiscount > 0
+        //    ? (productDiscount / items.length).round()
+        //    : 0,
       });
     }
 
@@ -129,7 +135,7 @@ class CashierService {
       final currentTotalTransaksi =
           (currentData['total_transaksi'] as num?)?.toDouble() ?? 0.0;
 
-      final earnedPoints = (totalPayment / 10000).floor();
+      final earnedPoints = (totalPayment / 100).floor();
 
       final newPoints = currentPoints - customerDiscount + earnedPoints;
 
@@ -141,12 +147,22 @@ class CashierService {
             'total_transaksi': currentTotalTransaksi + totalPayment,
           })
           .eq('pelanggan_id', pelangganId);
+
+      final stockService = StockService();
+
+      for (final entry in items.entries) {
+        final product = entry.key;
+        final qty = entry.value;
+
+        await stockService.reduceStockAfterSale(
+          produkId: int.parse(product.id), // ⬅️ FIX TIPE
+          qty: qty,
+          pelangganId: customer.id != null ? int.parse(customer.id!) : null,
+        );
+      }
     }
 
-    return {
-    'nomorTransaksi': nomorTransaksi,
-    'kasirName': kasirName,
-  };
+    return {'nomorTransaksi': nomorTransaksi, 'kasirName': kasirName};
   }
 
   String _generateTransactionNo() {

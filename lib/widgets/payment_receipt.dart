@@ -11,7 +11,7 @@ void showPaymentSuccessReceipt({
   required List<Map<String, dynamic>> items,
   required int subtotal,
   required int customerDiscount,
-  required int productDiscount,
+  // required int productDiscount,
   required int totalPayment,
   required String paymentMethod,
   required String cashierName,
@@ -104,8 +104,8 @@ void showPaymentSuccessReceipt({
                   const SizedBox(height: 16),
 
                   _priceRow("Subtotal", subtotal),
-                  if (customerDiscount + productDiscount > 0)
-                    _priceRow("Diskon", customerDiscount + productDiscount),
+                  if (customerDiscount > 0)
+                    _priceRow("Diskon", customerDiscount),
                   _priceRowBold("Total", totalPayment),
 
                   const SizedBox(height: 8),
@@ -149,7 +149,6 @@ void showPaymentSuccessReceipt({
                   items: items,
                   subtotal: subtotal,
                   customerDiscount: customerDiscount,
-                  productDiscount: productDiscount,
                   totalPayment: totalPayment,
                   paymentMethod: paymentMethod,
                   cashierName: cashierName,

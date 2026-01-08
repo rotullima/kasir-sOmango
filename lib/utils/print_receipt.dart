@@ -8,7 +8,6 @@ Future<pw.Document> generateReceiptPdf({
   required List<Map<String, dynamic>> items,
   required int subtotal,
   required int customerDiscount,
-  required int productDiscount,
   required int totalPayment,
   required String paymentMethod,
   required String cashierName,
@@ -132,8 +131,8 @@ Future<pw.Document> generateReceiptPdf({
               pw.SizedBox(height: 20),
 
               _priceRow('Subtotal', subtotal, textColor),
-              if (customerDiscount + productDiscount > 0)
-                _priceRow('Diskon', customerDiscount + productDiscount, textColor),
+              if (customerDiscount > 0)
+                _priceRow('Diskon', customerDiscount, textColor),
 
               pw.SizedBox(height: 8),
               _priceRowBold('Total', totalPayment, textColor),

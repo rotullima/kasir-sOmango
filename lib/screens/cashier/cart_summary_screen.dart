@@ -48,20 +48,33 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
     return (widget.customer.points / 1000).floor() * 1000;
   }
 
-  int get productDiscount {
-    return 1700; 
-  }
+  // int get productDiscount {
+  //   return 1700; 
+  // }
 
   int get totalPayment {
-    return subtotal - customerDiscount - productDiscount;
+    return subtotal - customerDiscount;
   }
 
   void increment(ProductModel p) {
-    setState(() {
-      cartItems[p] = (cartItems[p] ?? 0) + 1;
-    });
-    ref.read(cartProvider.notifier).increment(p);
+  final currentQty = cartItems[p] ?? 0;
+
+  if (currentQty >= p.stock) {
+    ScaffoldMessenger.of(context)
+  ..hideCurrentSnackBar()
+  ..showSnackBar(
+    const SnackBar(content: Text("Stok produk sudah habis")),
+  );
+    return;
   }
+
+  setState(() {
+    cartItems[p] = currentQty + 1;
+  });
+
+  ref.read(cartProvider.notifier).increment(p);
+}
+
 
   void decrement(ProductModel p) {
     setState(() {
@@ -97,7 +110,7 @@ class _CartSummaryScreenState extends ConsumerState<CartSummaryScreen> {
   items: cartItems,
   subtotal: subtotal,
   customerDiscount: customerDiscount,
-  productDiscount: productDiscount,
+  // productDiscount: productDiscount,
   totalPayment: totalPayment,
   paymentMethod: method,
   cashReceived: cashReceived,
@@ -126,7 +139,7 @@ final cashierName = result['kasirName']!;
               .toList(),
           subtotal: subtotal,
           customerDiscount: customerDiscount,
-          productDiscount: productDiscount,
+          // productDiscount: productDiscount,
           totalPayment: totalPayment,
           paymentMethod: method == "qris" ? "QRIS" : "Tunai",
           cashReceived: cashReceived,
@@ -479,7 +492,7 @@ final cashierName = result['kasirName']!;
                                 "Diskon Pelanggan:",
                                 "- Rp.$customerDiscount",
                               ),
-                              _row("Diskon Produk:", "- Rp.$productDiscount"),
+                              // _row("Diskon Produk:", "- Rp.$productDiscount"),
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 10),
                                 child: Divider(
